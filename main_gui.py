@@ -1,5 +1,6 @@
 import asyncio
 import os
+import sys
 import queue
 import threading
 import time
@@ -17,6 +18,21 @@ from gui_tabs import ServerTab, SenderTab, ReceiverTab
 from settings_dialog import SettingsDialog
 from utils import log_message, format_file_size
 
+# --- FUNCIÓN CLAVE PARA PYINSTALLER ---
+def resource_path(relative_path):
+    """
+    Obtiene la ruta absoluta al recurso, funciona para desarrollo y para el
+    ejecutable de PyInstaller.
+    """
+    try:
+        # PyInstaller crea una carpeta temporal y almacena la ruta en _MEIPASS
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
+
+    return os.path.join(base_path, relative_path)
+# ------------------------------------
+
 
 class FileTransferApp(ThemedTk):
     def __init__(self):
@@ -24,6 +40,10 @@ class FileTransferApp(ThemedTk):
         self.title("ZeroSocket File Transfer")
         self.geometry("950x700")
         self.protocol("WM_DELETE_WINDOW", self.on_closing)
+
+        # --- Referencias para imágenes ---
+        self.app_icon = None
+        self.logo_image = None
 
         # --- Configuración y Estado ---
         self.config = config_manager.load_config()
@@ -33,12 +53,10 @@ class FileTransferApp(ThemedTk):
         self.client_thread = None
         self.stop_client_event = threading.Event()
         
-        # --- CAMBIO: Variables de estado para el archivo a enviar ---
+        # Variables de estado para el archivo a enviar
         self.file_to_send_path = tk.StringVar()
         self.file_to_send_name = tk.StringVar(value="Ningún archivo seleccionado")
         self.file_to_send_details = tk.StringVar(value="Tamaño: N/A")
-        
-        self.logo_image = None
 
         # --- Colas de Logs ---
         self.log_queues = {
@@ -48,6 +66,7 @@ class FileTransferApp(ThemedTk):
         }
 
         # --- Construcción de la GUI ---
+        self._set_app_icon()
         self._create_toolbar()
         
         main_frame = ttk.Frame(self)
@@ -59,8 +78,19 @@ class FileTransferApp(ThemedTk):
         self.apply_config()
         self.after(100, self.process_log_queues)
         
+        # Lanzar la autoconexión al iniciar la aplicación
         self.after(500, self.trigger_auto_discovery_and_connect)
 
+    def _set_app_icon(self):
+        """Carga y establece el icono de la ventana de la aplicación."""
+        try:
+            # Reutilizamos nuestra útil función resource_path
+            icon_path = resource_path(os.path.join("img", "icon.png"))
+            self.app_icon = ImageTk.PhotoImage(Image.open(icon_path))
+            self.iconphoto(True, self.app_icon)
+        except Exception as e:
+            # Si el icono falla, la app no debe crashear.
+            print(f"Advertencia: No se pudo cargar el icono de la aplicación: {e}")
 
     def _create_toolbar(self):
         toolbar = ttk.Frame(self, padding="5")
@@ -74,7 +104,8 @@ class FileTransferApp(ThemedTk):
         sidebar_frame.pack_propagate(False)
 
         try:
-            logo_path = os.path.join("img", "logo.png")
+            logo_path = resource_path(os.path.join("img", "logo.png"))
+            
             original_image = Image.open(logo_path)
             
             target_height = 120
@@ -101,7 +132,6 @@ class FileTransferApp(ThemedTk):
         self.notebook.pack(side="left", expand=True, fill="both", padx=10, pady=10)
 
         self.server_tab = ServerTab(self.notebook, self)
-        # --- CAMBIO: Pasar las nuevas variables a la pestaña Emisor ---
         self.sender_tab = SenderTab(
             self.notebook, 
             self, 
@@ -159,8 +189,6 @@ class FileTransferApp(ThemedTk):
             self.log_to_widget(self.sender_tab.log_widget, self.log_queues["sender"].get_nowait())
         self.after(100, self.process_log_queues)
 
-    # --- Lógica de Control ---
-    
     def on_tab_changed(self, event):
         selected_tab_index = self.notebook.index(self.notebook.select())
         if selected_tab_index == 0:
@@ -206,34 +234,17 @@ class FileTransferApp(ThemedTk):
         self.server_tab.set_state("stopped")
 
     def select_file(self):
-        """
-        Lógica mejorada para seleccionar un archivo, recordando la última carpeta
-        y mostrando detalles claros del archivo seleccionado.
-        """
-        # --- LÓGICA MEJORADA ---
-        # 1. Obtener la última carpeta usada desde la configuración
         last_folder = self.config.get("last_used_folder", os.path.expanduser("~"))
-
-        # 2. Abrir el diálogo de archivo comenzando en esa carpeta
         filepath = filedialog.askopenfilename(initialdir=last_folder)
-
-        # 3. Si el usuario selecciona un archivo, procesarlo
         if filepath:
-            # Guardar la ruta completa en la variable de estado interna
             self.file_to_send_path.set(filepath)
-
-            # Obtener y mostrar el nombre del archivo
             filename = os.path.basename(filepath)
             self.file_to_send_name.set(filename)
-
-            # Obtener, formatear y mostrar el tamaño del archivo
             try:
                 size_bytes = os.path.getsize(filepath)
                 self.file_to_send_details.set(f"Tamaño: {format_file_size(size_bytes)}")
             except OSError:
                 self.file_to_send_details.set("Tamaño: Desconocido")
-
-            # 4. Actualizar y guardar la configuración con la nueva carpeta
             new_folder = os.path.dirname(filepath)
             self.config["last_used_folder"] = new_folder
             config_manager.save_config(self.config)
