@@ -7,7 +7,7 @@ class SettingsDialog(tk.Toplevel):
         super().__init__(parent)
         self.title("Configuración")
         self.parent = parent
-        self.config = parent.config.copy()  # Trabajar con una copia
+        self.config = parent.config.copy()
 
         self.transient(parent)
         self.grab_set()
@@ -18,20 +18,21 @@ class SettingsDialog(tk.Toplevel):
 
     def _create_variables(self):
         self.server_port = tk.StringVar(value=self.config.get("server_port", "8765"))
-        self.server_topic = tk.StringVar(value=self.config.get("server_topic", "chat")) # <-- AÑADIDO
+        self.server_topic = tk.StringVar(value=self.config.get("server_topic", "filetransfer"))
         self.sender_ip = tk.StringVar(value=self.config.get("sender_ip", "localhost"))
         self.sender_port = tk.StringVar(value=self.config.get("sender_port", "8765"))
-        self.sender_topic = tk.StringVar(value=self.config.get("sender_topic", "chat"))
+        self.sender_topic = tk.StringVar(value=self.config.get("sender_topic", "filetransfer"))
         self.receiver_ip = tk.StringVar(value=self.config.get("receiver_ip", "localhost"))
         self.receiver_port = tk.StringVar(value=self.config.get("receiver_port", "8765"))
-        self.receiver_topic = tk.StringVar(value=self.config.get("receiver_topic", "chat"))
+        self.receiver_topic = tk.StringVar(value=self.config.get("receiver_topic", "filetransfer"))
         self.download_folder = tk.StringVar(value=self.config.get("download_folder", ""))
+        # --- NUEVA VARIABLE BOOLEANA ---
+        self.auto_connect = tk.BooleanVar(value=self.config.get("auto_connect_on_startup", True))
 
     def _create_widgets(self):
         main_frame = ttk.Frame(self, padding="10")
         main_frame.pack(expand=True, fill="both")
 
-        # --- CAMBIO: Añadido campo de Topic al Servidor ---
         self._create_section(main_frame, "Servidor por Defecto", [
             ("Puerto:", self.server_port), 
             ("Topic:", self.server_topic)
@@ -42,6 +43,17 @@ class SettingsDialog(tk.Toplevel):
         self._create_section(main_frame, "Receptor por Defecto", [
             ("IP Servidor:", self.receiver_ip), ("Puerto:", self.receiver_port), ("Topic:", self.receiver_topic)
         ])
+
+        # --- NUEVA SECCIÓN PARA COMPORTAMIENTO ---
+        behavior_frame = ttk.LabelFrame(main_frame, text="Comportamiento", padding="10")
+        behavior_frame.pack(fill="x", pady=5)
+        
+        auto_connect_check = ttk.Checkbutton(
+            behavior_frame,
+            text="Conectar automáticamente al encontrar un único servidor",
+            variable=self.auto_connect
+        )
+        auto_connect_check.pack(anchor="w")
 
         # Carpeta de Descarga
         download_frame = ttk.LabelFrame(main_frame, text="Carpeta de Descargas", padding="10")
@@ -70,7 +82,7 @@ class SettingsDialog(tk.Toplevel):
             
     def save_and_close(self):
         self.config["server_port"] = self.server_port.get()
-        self.config["server_topic"] = self.server_topic.get() # <-- AÑADIDO
+        self.config["server_topic"] = self.server_topic.get()
         self.config["sender_ip"] = self.sender_ip.get()
         self.config["sender_port"] = self.sender_port.get()
         self.config["sender_topic"] = self.sender_topic.get()
@@ -78,6 +90,8 @@ class SettingsDialog(tk.Toplevel):
         self.config["receiver_port"] = self.receiver_port.get()
         self.config["receiver_topic"] = self.receiver_topic.get()
         self.config["download_folder"] = self.download_folder.get()
+        # --- GUARDAR EL NUEVO VALOR ---
+        self.config["auto_connect_on_startup"] = self.auto_connect.get()
 
         self.parent.save_and_apply_config(self.config)
         self.destroy()

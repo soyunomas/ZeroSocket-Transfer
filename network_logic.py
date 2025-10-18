@@ -52,14 +52,11 @@ class ServiceAdvertiser:
             self.zeroconf.register_service(self.info)
             log_message(self.log_queue, f"Servicio '{self.name}' (Topic: {self.topic}) anunciado en {ip_address}:{self.port}")
             
-            # Mantener el hilo vivo hasta que se llame a stop
             self._stop_event.wait()
 
         except Exception as e:
             log_message(self.log_queue, f"Error en el anunciador de servicios: {e}")
         finally:
-            # --- LÍNEA CORREGIDA ---
-            # Se usa self.log_queue (la cola individual) en lugar de self.log_queues.
             log_message(self.log_queue, "Anuncio de servicio detenido.")
 
     def stop(self):
@@ -182,3 +179,13 @@ async def send_file_async(uri, topic, file_path, log_queue, callback):
     finally:
         if callback:
             callback()
+
+
+# <-- FUNCIÓN AÑADIDA -->
+def get_ip_from_service(info):
+    """Extrae y convierte la primera dirección IP de un objeto ServiceInfo a un string."""
+    if info and info.addresses:
+        # info.addresses[0] es una dirección en formato de bytes (ej: b'\xc0\xa8\x01\x0f')
+        # socket.inet_ntoa la convierte a un string legible (ej: "192.168.1.15")
+        return socket.inet_ntoa(info.addresses[0])
+    return None
