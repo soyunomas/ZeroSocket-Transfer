@@ -2,9 +2,7 @@
 
 Aplicación de escritorio en Python para enviar y recibir archivos en una red local (LAN) usando el protocolo WebSocket, con autodescubrimiento de servidores mediante Zeroconf.
 
-![Captura de Pantalla de la Aplicación](placeholder_captura.png)
-
----
+![Captura de Pantalla de la Aplicación](img/screenshot.png)
 
 ## Características Principales
 
