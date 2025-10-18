@@ -1,21 +1,33 @@
 import json
 import os
 from tkinter import messagebox
+from pathlib import Path  # <-- Importamos la clase Path
 
 CONFIG_FILE = "app_config.json"
 
 def get_default_config():
     """Retorna un diccionario con la configuración por defecto."""
+    
+    # --- LÓGICA MEJORADA ---
+    # Busca la carpeta de descargas estándar del usuario de forma multiplataforma.
+    # Path.home() obtiene el directorio de inicio (ej: /home/usuario o C:\Users\Usuario)
+    # Luego le añadimos la carpeta "Downloads". Lo convertimos a string para guardarlo en JSON.
+    try:
+        default_downloads = str(Path.home() / "Downloads")
+    except Exception:
+        # Si por alguna razón no se puede encontrar, volvemos al método anterior como fallback.
+        default_downloads = os.path.join(os.getcwd(), "downloads")
+
     return {
         "server_port": "8765",
-        "server_topic": "chat", # <-- AÑADIDO
+        "server_topic": "filetransfer",
         "sender_ip": "localhost",
         "sender_port": "8765",
-        "sender_topic": "chat",
+        "sender_topic": "filetransfer",
         "receiver_ip": "localhost",
         "receiver_port": "8765",
-        "receiver_topic": "chat",
-        "download_folder": os.path.join(os.getcwd(), "downloads")
+        "receiver_topic": "filetransfer",
+        "download_folder": default_downloads  # <-- Usamos la nueva ruta por defecto
     }
 
 def load_config():

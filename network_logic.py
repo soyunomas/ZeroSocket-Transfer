@@ -18,10 +18,10 @@ stop_server_event = asyncio.Event()
 
 class ServiceAdvertiser:
     """Anuncia un servicio en la red local usando Zeroconf (mDNS)."""
-    def __init__(self, name, port, topic, log_queue): # Añadido 'topic' al constructor
+    def __init__(self, name, port, topic, log_queue):
         self.name = name
         self.port = port
-        self.topic = topic # Guardamos el topic
+        self.topic = topic
         self.log_queue = log_queue
         self.zeroconf = None
         self.info = None
@@ -36,9 +36,8 @@ class ServiceAdvertiser:
             service_type = "_ws-file-xfer._tcp.local."
             service_name = f"{self.name} on {hostname}:{self.port}.{service_type}"
 
-            # --- CAMBIO: Añadir el topic como propiedad ---
             properties = {
-                "topic": self.topic.encode('utf-8') # Las propiedades deben ser bytes
+                "topic": self.topic.encode('utf-8')
             }
 
             self.info = ServiceInfo(
@@ -46,7 +45,7 @@ class ServiceAdvertiser:
                 name=service_name,
                 addresses=[socket.inet_aton(ip_address)],
                 port=self.port,
-                properties=properties, # Usamos las propiedades con el topic
+                properties=properties,
             )
             
             self.zeroconf = Zeroconf()
@@ -59,7 +58,9 @@ class ServiceAdvertiser:
         except Exception as e:
             log_message(self.log_queue, f"Error en el anunciador de servicios: {e}")
         finally:
-            log_message(self.log_queues["server"], "Anuncio de servicio detenido.") # Corregido: usar self.log_queue
+            # --- LÍNEA CORREGIDA ---
+            # Se usa self.log_queue (la cola individual) en lugar de self.log_queues.
+            log_message(self.log_queue, "Anuncio de servicio detenido.")
 
     def stop(self):
         """Detiene el anuncio del servicio y libera los recursos."""
