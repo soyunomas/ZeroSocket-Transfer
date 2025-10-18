@@ -1,0 +1,10 @@
+{
+    "server_port": "8766",
+    "sender_ip": "localhost",
+    "sender_port": "8766",
+    "sender_topic": "chat",
+    "receiver_ip": "localhost",
+    "receiver_port": "8766",
+    "receiver_topic": "chat",
+    "download_folder": "/home/yo/GIT/sender-files/downloads"
+}
