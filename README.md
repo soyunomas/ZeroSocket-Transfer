@@ -1,6 +1,6 @@
 # ZeroSocket-Transfer
 
-Aplicación de escritorio en Python para enviar y recibir archivos en una red local (LAN) **usando el protocolo WebSocket**, con autodescubrimiento de servidores mediante Zeroconf.
+Aplicación de escritorio en Python para enviar y recibir archivos en una red local (LAN) usando el protocolo WebSocket, con autodescubrimiento de servidores mediante Zeroconf.
 
 ![Captura de Pantalla de la Aplicación](placeholder_captura.png)
 
@@ -28,13 +28,13 @@ Para poner en marcha el proyecto en tu máquina local, sigue estos pasos:
 2.  **Crea y activa un entorno virtual:**
     *   En macOS / Linux:
         ```bash
-        python3 -m venv venv
-        source venv/bin/activate
+        python3 -m venv .venv
+        source .venv/bin/activate
         ```
     *   En Windows:
         ```bash
-        python -m venv venv
-        .\venv\Scripts\activate
+        python -m venv .venv
+        .\.venv\Scripts\activate
         ```
 
 3.  **Instala las dependencias:**
